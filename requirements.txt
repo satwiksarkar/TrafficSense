@@ -19,3 +19,4 @@ osmnx
 geopy
 polyline
 scipy
+google-generativeai
