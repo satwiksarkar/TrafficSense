@@ -127,3 +127,6 @@ class Incident(Base):
     special_assets_needed = Column(String, nullable=False) # JSON string of list
     spatial_resolution_method = Column(String, nullable=False)
     nearest_junction = Column(String, nullable=False)
+    notes = Column(String, default="", nullable=True)
+
+

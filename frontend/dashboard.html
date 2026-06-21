@@ -1716,6 +1716,7 @@
 
         let incidentLayer = L.layerGroup().addTo(map);
         let pickLayer = L.layerGroup().addTo(map);
+        let activeJamCircle = null;
 
         function sevClass(p) {
             p = (p || '').toUpperCase();
@@ -1800,6 +1801,10 @@
             const count = document.getElementById('panelCount');
             const pill = document.getElementById('incidentPill');
             incidentLayer.clearLayers();
+            if (activeJamCircle) {
+                map.removeLayer(activeJamCircle);
+                activeJamCircle = null;
+            }
             list.innerHTML = '';
 
             count.textContent = reports.length;
@@ -1841,7 +1846,28 @@
         <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>${r.officers ?? '—'} off.</span>
       </div>`;
                 card.addEventListener('click', () => {
-                    if (!isNaN(lat) && !isNaN(lng)) map.flyTo([lat, lng], 15, { duration: .6 });
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        map.flyTo([lat, lng], 15, { duration: .6 });
+                        
+                        if (activeJamCircle) {
+                            map.removeLayer(activeJamCircle);
+                        }
+                        
+                        // Calculate radius based on priority (high=1000m, medium=500m, low=250m)
+                        const p = (r.priority || 'MEDIUM').toUpperCase();
+                        const radius = p === 'HIGH' ? 1000 : (p === 'LOW' ? 250 : 500);
+                        const color = p === 'HIGH' ? '#f85149' : (p === 'LOW' ? '#ff9f1c' : '#2196f3');
+                        
+                        activeJamCircle = L.circle([lat, lng], {
+                            radius: radius,
+                            color: color,
+                            fillColor: color,
+                            fillOpacity: 0.1,
+                            weight: 1.5,
+                            opacity: 0.5,
+                            dashArray: '5, 8'
+                        }).addTo(map);
+                    }
                 });
                 list.appendChild(card);
             });

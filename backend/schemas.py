@@ -311,10 +311,16 @@ class IncidentResponse(BaseModel):
     special_assets_needed: list[str]
     spatial_resolution_method: str
     nearest_junction: str
+    notes: Optional[str] = ""
 
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class UpdateIncidentRequest(BaseModel):
+    status: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class CreateResourceRequest(BaseModel):

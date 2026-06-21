@@ -3391,6 +3391,17 @@
                 </div>
               </div>
 
+              <!-- Section 3.5: Resource Actions -->
+              <div class="dd-section" id="ddResourceActionSection">
+                <div class="dd-section-hdr">
+                  <span class="dd-section-title">⚡ Resource Actions</span>
+                </div>
+                <div class="dd-section-body" style="display: flex; gap: 8px;">
+                  <button class="dr-action-btn primary" id="deplBtnConfirm" style="flex: 1; padding: 10px; font-weight: 600; cursor: pointer; border-radius: 4px; font-size: 11px; color:#fff; border:none;">Deploy Recommended</button>
+                  <button class="dr-action-btn secondary" id="deplBtnRelease" style="flex: 1; padding: 10px; font-weight: 600; cursor: pointer; border-radius: 4px; border: 1px solid #f85149; color:#f85149; background:transparent; display:none; font-size: 11px;">Release Resources</button>
+                </div>
+              </div>
+
               <!-- Section 4: Status update -->
               <div class="dd-section">
                 <div class="dd-section-hdr">
@@ -3837,44 +3848,21 @@
         refreshBtn.style.opacity = '0.5';
         refreshBtn.style.cursor = 'not-allowed';
       }
-      showLoadingOverlay("Loading incidents from AI model...");
+      showLoadingOverlay("Loading incidents...");
       try {
-        // Step 1: Get raw incident data
-        const sampleRes = await fetch(BASE_URL + "/incidents/sample");
-        const sampleData = await sampleRes.json();
+        // Step 1: Get active incidents from backend
+        const res = await fetch(BASE_URL + "/incidents/active");
+        if (!res.ok) throw new Error("Failed to load active incidents");
+        const activeData = await res.json();
         
-        // Step 2: Run AI predictions for all incidents in parallel
-        updateLoadingOverlay("Running NGBoost + Gemini predictions...");
-        const predictions = await Promise.all(
-          sampleData.map(incident =>
-            fetch(BASE_URL + "/predict/single", {
-              method: "POST",
-              headers: {"Content-Type": "application/json"},
-              body: JSON.stringify(incident)
-            }).then(r => r.json())
-          )
-        );
+        // Step 2: Normalize and store in INCIDENTS dictionary
+        INCIDENTS = {};
+        activeData.forEach(inc => {
+          const normalized = normalizeIncident(inc);
+          INCIDENTS[normalized.id] = normalized;
+        });
         
-        // Step 3: Merge prediction outputs into display data
-        INCIDENTS = predictions.map((pred, i) => ({
-          ...sampleData[i],
-          duration_mins: Math.round(pred.predicted_duration_mins),
-          jam_length_km: pred.jam_length_km,
-          severity_score: pred.severity_multiplier,
-          officers_needed: pred.officers_needed,
-          barricade_points: pred.barricade_points,
-          hazards: pred.hazards_present,
-          special_assets: pred.special_assets_needed,
-          suggested_resources: pred.suggested_resources,
-          resource_shortage: pred.resource_shortage,
-          spatial_method: pred.spatial_resolution_method,
-          nearest_junction: pred.nearest_junction,
-          distance_to_nearest_m: pred.distance_to_nearest_m,
-          historical_count: sampleData[i].historical_count,
-          historical_median_mins: sampleData[i].historical_median_mins
-        }));
-        
-        // Step 4: Load resource summary for sidebar stats
+        // Step 3: Load resource summary for sidebar stats
         const summaryRes = await fetch(BASE_URL + "/resources/summary");
         RESOURCE_SUMMARY = await summaryRes.json();
         
@@ -4178,6 +4166,19 @@
             marker.openPopup();
           }, 600);
         }
+
+        // Show selected jam circle, hide all other jam circles
+        Object.keys(jamCirclesMap).forEach(key => {
+          if (key === id) {
+            if (!map.hasLayer(jamCirclesMap[key])) {
+              jamCirclesMap[key].addTo(map);
+            }
+          } else {
+            if (map.hasLayer(jamCirclesMap[key])) {
+              map.removeLayer(jamCirclesMap[key]);
+            }
+          }
+        });
 
         // POPULATE DETAIL DRAWER
         populateDrawer(incident);
@@ -4810,7 +4811,7 @@
           weight: 1,
           opacity: strokeOpacity,
           dashArray: '5, 8'
-        }).addTo(map);
+        });
 
         jamCirclesMap[inc.id] = jamCircle;
 
@@ -5839,18 +5840,24 @@
       document.getElementById('btnResolve').addEventListener('click', () => {
         const inc = INCIDENTS[activeIncidentId];
         if (inc) {
-          if (inc.status === 'resolved') {
-            inc.status = 'open';
-            inc.timeline.resolved = 'Pending';
-          } else {
-            inc.status = 'resolved';
-            const now = new Date();
-            inc.timeline.resolved = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-          }
-          
-          // Re-render components to show update
-          renderSidebar();
-          populateDrawer(inc);
+          fetch(`${BASE_URL}/incidents/resolve/${inc.id}`, {
+            method: 'POST'
+          })
+          .then(async res => {
+            if (!res.ok) {
+              const errData = await res.json();
+              throw new Error(errData.detail || 'Failed to resolve incident');
+            }
+            return res.json();
+          })
+          .then(data => {
+            showToast("Incident marked as resolved successfully", "green-alt");
+            document.getElementById('incidentDrawer').classList.remove('open');
+          })
+          .catch(err => {
+            console.error('Error resolving incident:', err);
+            showToast(`⚠ ${err.message}`, "red");
+          });
         }
       });
 
@@ -5979,53 +5986,73 @@
       const priorityFilter = document.getElementById('deplFilterPriority').value;
       const typeFilter     = document.getElementById('deplFilterType').value;
 
-      let filtered = getIncidentsArray().filter(inc => {
-        if (zoneFilter !== 'All' && inc.zone !== zoneFilter) return false;
-        if (priorityFilter !== 'All' && inc.priority !== priorityFilter) return false;
-        if (typeFilter !== 'All' && inc.event_cause !== typeFilter) return false;
-        return true;
-      });
+      fetch(`${BASE_URL}/resources/allocations`)
+        .then(r => r.json())
+        .then(allocations => {
+          getIncidentsArray().forEach(inc => {
+            const incAllocs = allocations.filter(a => a.incident_id === inc.id);
+            const officerAlloc = incAllocs.find(a => a.resource_name === 'Traffic Officer');
+            if (DEPLOY_DATA[inc.id]) {
+              DEPLOY_DATA[inc.id].officersAssigned = officerAlloc ? officerAlloc.quantity : 0;
+              DEPLOY_DATA[inc.id].status = inc.status;
+            }
+          });
+          drawDeploymentPlanCards();
+        })
+        .catch(err => {
+          console.error("Error fetching deployments:", err);
+          drawDeploymentPlanCards();
+        });
 
-      const listEl = document.getElementById('deplIncidentList');
-      listEl.innerHTML = '';
-      document.getElementById('deplIncCount').textContent = filtered.length;
+      function drawDeploymentPlanCards() {
+        let filtered = getIncidentsArray().filter(inc => {
+          if (zoneFilter !== 'All' && inc.zone !== zoneFilter) return false;
+          if (priorityFilter !== 'All' && inc.priority !== priorityFilter) return false;
+          if (typeFilter !== 'All' && inc.event_cause !== typeFilter) return false;
+          return true;
+        });
 
-      filtered.forEach(inc => {
-        const dd = DEPLOY_DATA[inc.id];
-        if (!dd) return;
-        const pct = Math.round((dd.officersAssigned / Math.max(1, inc.officers_needed)) * 100);
-        const pctCapped = Math.min(100, pct);
-        const understaffed = pct < 100;
-        const barColor = understaffed ? 'var(--red)' : 'var(--green-alt)';
-        const pctColor = understaffed ? 'var(--red)' : 'var(--green-alt)';
+        const listEl = document.getElementById('deplIncidentList');
+        listEl.innerHTML = '';
+        document.getElementById('deplIncCount').textContent = filtered.length;
 
-        const card = document.createElement('div');
-        card.className = `deploy-inc-card p-${inc.priority.toLowerCase()}${activeDeployIncidentId === inc.id ? ' selected' : ''}`;
-        card.id = `dcard_${inc.id}`;
-        card.innerHTML = `
-          <div class="dic-top">
-            <div class="dic-junction">${inc.junction}</div>
-            <span class="dic-badge ${inc.priority.toLowerCase()}">${inc.priority}</span>
-          </div>
-          <div class="dic-cause">${getCauseIcon(inc.event_cause)} ${formatEventCause(inc.event_cause)}</div>
-          <div class="dic-staffing">
-            <span class="dic-staffing-label">${dd.officersAssigned}/${inc.officers_needed} officers</span>
-            <div class="dic-staffing-bar-bg">
-              <div class="dic-staffing-bar-fill" style="width:${pctCapped}%; background:${barColor};"></div>
+        filtered.forEach(inc => {
+          const dd = DEPLOY_DATA[inc.id];
+          if (!dd) return;
+          const pct = Math.round((dd.officersAssigned / Math.max(1, inc.officers_needed)) * 100);
+          const pctCapped = Math.min(100, pct);
+          const understaffed = pct < 100;
+          const barColor = understaffed ? 'var(--red)' : 'var(--green-alt)';
+          const pctColor = understaffed ? 'var(--red)' : 'var(--green-alt)';
+
+          const card = document.createElement('div');
+          card.className = `deploy-inc-card p-${inc.priority.toLowerCase()}${activeDeployIncidentId === inc.id ? ' selected' : ''}`;
+          card.id = `dcard_${inc.id}`;
+          card.innerHTML = `
+            <div class="dic-top">
+              <div class="dic-junction">${inc.junction}</div>
+              <span class="dic-badge ${inc.priority.toLowerCase()}">${inc.priority}</span>
             </div>
-            <span class="dic-staffing-pct" style="color:${pctColor};">${pct}%</span>
-          </div>
-        `;
-        card.addEventListener('click', () => selectDeploymentIncident(inc.id));
-        listEl.appendChild(card);
-      });
+            <div class="dic-cause">${getCauseIcon(inc.event_cause)} ${formatEventCause(inc.event_cause)}</div>
+            <div class="dic-staffing">
+              <span class="dic-staffing-label">${dd.officersAssigned}/${inc.officers_needed} officers</span>
+              <div class="dic-staffing-bar-bg">
+                <div class="dic-staffing-bar-fill" style="width:${pctCapped}%; background:${barColor};"></div>
+              </div>
+              <span class="dic-staffing-pct" style="color:${pctColor};">${pct}%</span>
+            </div>
+          `;
+          card.addEventListener('click', () => selectDeploymentIncident(inc.id));
+          listEl.appendChild(card);
+        });
 
-      // Re-populate detail panel if current selection still in filtered set
-      if (activeDeployIncidentId && filtered.find(i => i.id === activeDeployIncidentId)) {
-        selectDeploymentIncident(activeDeployIncidentId);
-      } else if (filtered.length > 0 && !activeDeployIncidentId) {
-        // Auto-select first
-        selectDeploymentIncident(filtered[0].id);
+        // Re-populate detail panel if current selection still in filtered set
+        if (activeDeployIncidentId && filtered.find(i => i.id === activeDeployIncidentId)) {
+          selectDeploymentIncident(activeDeployIncidentId);
+        } else if (filtered.length > 0 && !activeDeployIncidentId) {
+          // Auto-select first
+          selectDeploymentIncident(filtered[0].id);
+        }
       }
     }
 
@@ -6041,8 +6068,7 @@
       }
 
       const inc = INCIDENTS[id];
-      const dd = DEPLOY_DATA[id];
-      if (!inc || !dd) return;
+      if (!inc) return;
 
       // Show detail panel
       document.getElementById('deplDetailEmpty').style.display = 'none';
@@ -6050,36 +6076,13 @@
       document.getElementById('deplDetailLabel').textContent = inc.junction;
       document.getElementById('deplMapLabel').textContent = `${inc.zone} – ${inc.junction}`;
 
-      // Summary bar
-      document.getElementById('ddSumOfficers').textContent = `${dd.officersAssigned}/${inc.officers_needed}`;
-      document.getElementById('ddSumBarricades').textContent = inc.barricades_needed;
-      document.getElementById('ddSumJam').textContent = inc.jam_length_km;
+      // Notes
+      const notesArea = document.getElementById('ddNotesArea');
+      notesArea.value = inc.notes || '';
 
-      // Officers table
-      const tbody = document.getElementById('ddOfficersTbody');
-      tbody.innerHTML = '';
-      document.getElementById('ddOfficersBadge').textContent = dd.officers.length;
-      dd.officers.forEach(off => {
-        const statusClass = off.status === 'Deployed' ? 'deployed' : (off.status === 'En Route' ? 'en-route' : 'standby');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${off.id}</td>
-          <td style="color:var(--muted);">${off.zone}</td>
-          <td><span class="dd-status-pill ${statusClass}">${off.status}</span></td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Barricades list
-      const barList = document.getElementById('ddBarricadesList');
-      barList.innerHTML = '';
-      document.getElementById('ddBarricadesBadge').textContent = dd.barricadePoints.length;
-      dd.barricadePoints.forEach(pt => {
-        const item = document.createElement('div');
-        item.className = 'dd-barricade-item';
-        item.innerHTML = `<div class="dd-barricade-icon"></div><span>${pt}</span>`;
-        barList.appendChild(item);
-      });
+      // Status select
+      const statusSel = document.getElementById('ddStatusSelect');
+      statusSel.value = inc.status || 'open';
 
       // Diversion routes
       const routesEl = document.getElementById('ddDiversionRoutes');
@@ -6098,16 +6101,108 @@
         routesEl.appendChild(item);
       });
 
-      // Status select
-      const statusSel = document.getElementById('ddStatusSelect');
-      statusSel.value = dd.status;
+      // Fetch dynamic allocations from backend
+      fetch(`${BASE_URL}/resources/allocations/${inc.id}`)
+        .then(r => r.json())
+        .then(allocs => {
+          // Check if this incident selection has changed while fetching
+          if (activeDeployIncidentId !== id) return;
 
-      // Notes
-      const notesArea = document.getElementById('ddNotesArea');
-      notesArea.value = incidentNotes[id] || '';
+          const isDeployed = allocs.length > 0;
+          const confirmBtn = document.getElementById('deplBtnConfirm');
+          const releaseBtn = document.getElementById('deplBtnRelease');
 
-      // Update deploy map
-      updateDeployMap(inc, dd);
+          if (isDeployed) {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.cursor = 'not-allowed';
+            confirmBtn.textContent = 'Deployed';
+            releaseBtn.style.display = 'block';
+          } else {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+            confirmBtn.style.cursor = 'pointer';
+            confirmBtn.textContent = 'Deploy Recommended';
+            releaseBtn.style.display = 'none';
+          }
+
+          // Officers calculation
+          const officerAlloc = allocs.find(a => a.resource_name === 'Traffic Officer');
+          const numOfficers = officerAlloc ? officerAlloc.quantity : 0;
+          
+          document.getElementById('ddSumOfficers').textContent = `${numOfficers}/${inc.officers_needed}`;
+          document.getElementById('ddOfficersBadge').textContent = numOfficers > 0 ? numOfficers : inc.officers_needed;
+
+          // Officers table
+          const tbody = document.getElementById('ddOfficersTbody');
+          tbody.innerHTML = '';
+          const officersList = [];
+          
+          const totalOfficersToShow = numOfficers > 0 ? numOfficers : inc.officers_needed;
+          const officerStatus = numOfficers > 0 ? 'Deployed' : 'Unallocated';
+          const statusClass = numOfficers > 0 ? 'deployed' : 'standby';
+
+          for (let i = 0; i < totalOfficersToShow; i++) {
+            const suffix = String(i + 1).padStart(3, '0');
+            const offId = `BTP-${inc.id.slice(-3)}-${suffix}`;
+            officersList.push({ id: offId, status: officerStatus });
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${offId}</td>
+              <td style="color:var(--muted);">${inc.zone}</td>
+              <td><span class="dd-status-pill ${statusClass}">${officerStatus}</span></td>
+            `;
+            tbody.appendChild(tr);
+          }
+
+          // Barricades calculation
+          const barricadeAlloc = allocs.find(a => a.resource_name === 'Barricade Set (10 units)');
+          const numBarricades = barricadeAlloc ? barricadeAlloc.quantity * 10 : 0;
+          const totalBarricadesToShow = numBarricades > 0 ? numBarricades : inc.barricade_points;
+
+          document.getElementById('ddSumBarricades').textContent = numBarricades > 0 ? numBarricades : inc.barricade_points;
+          document.getElementById('ddBarricadesBadge').textContent = totalBarricadesToShow;
+
+          const barList = document.getElementById('ddBarricadesList');
+          barList.innerHTML = '';
+          const barricadePoints = [];
+
+          const bNames = [
+            'Entry – North Approach', 'Entry – South Approach', 'Entry – East Flyover',
+            'Exit – West Service', 'Junction – Inner Ring', 'Slip Road – A',
+            'Overpass Gate – B', 'Connector – Feeder'
+          ];
+
+          for (let i = 0; i < totalBarricadesToShow; i++) {
+            const bName = bNames[i % bNames.length];
+            barricadePoints.push(bName);
+            
+            const item = document.createElement('div');
+            item.className = 'dd-barricade-item';
+            item.innerHTML = `
+              <div class="dd-barricade-icon" style="background: ${numBarricades > 0 ? 'var(--green-alt)' : '#888'}"></div>
+              <span style="color: ${numBarricades > 0 ? '#fff' : 'var(--muted)'}">${bName}</span>
+            `;
+            barList.appendChild(item);
+          }
+
+          // Jam (km)
+          document.getElementById('ddSumJam').textContent = inc.jam_length_km;
+
+          // Rebuild deployment data mock to update the Leaflet deployMap
+          const ddMock = {
+            officersAssigned: numOfficers,
+            officers: officersList,
+            barricadePoints: barricadePoints,
+            status: inc.status
+          };
+
+          updateDeployMap(inc, ddMock);
+        })
+        .catch(err => {
+          console.error("Error loading allocations:", err);
+        });
     }
 
     function updateDeployMap(inc, dd) {
@@ -6235,30 +6330,144 @@
       document.getElementById('ddBtnUpdateStatus').addEventListener('click', () => {
         if (!activeDeployIncidentId) return;
         const newStatus = document.getElementById('ddStatusSelect').value;
-        DEPLOY_DATA[activeDeployIncidentId].status = newStatus;
-        const inc = INCIDENTS[activeDeployIncidentId];
-        if (inc) inc.status = newStatus;
-        // Show confirmation flash
-        const btn = document.getElementById('ddBtnUpdateStatus');
-        const original = btn.textContent;
-        btn.textContent = '✅ Status Updated';
-        btn.style.background = 'var(--green-alt)';
-        btn.style.borderColor = 'var(--green-alt)';
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.style.background = '';
-          btn.style.borderColor = '';
-        }, 2000);
+        
+        fetch(`${BASE_URL}/incidents/${activeDeployIncidentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        })
+        .then(async res => {
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || "Status update failed");
+          }
+          return res.json();
+        })
+        .then(data => {
+          const inc = INCIDENTS[activeDeployIncidentId];
+          if (inc) inc.status = newStatus;
+          if (DEPLOY_DATA[activeDeployIncidentId]) {
+            DEPLOY_DATA[activeDeployIncidentId].status = newStatus;
+          }
+          
+          const btn = document.getElementById('ddBtnUpdateStatus');
+          const original = btn.textContent;
+          btn.textContent = '✅ Status Updated';
+          btn.style.background = 'var(--green-alt)';
+          btn.style.borderColor = 'var(--green-alt)';
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.style.background = '';
+            btn.style.borderColor = '';
+          }, 2000);
+
+          // Re-render
+          renderDeploymentPlan();
+        })
+        .catch(err => {
+          console.error("Status update error:", err);
+          showToast(`⚠ ${err.message}`, "red");
+        });
       });
 
       // Save notes
       document.getElementById('ddBtnSaveNotes').addEventListener('click', () => {
         if (!activeDeployIncidentId) return;
-        incidentNotes[activeDeployIncidentId] = document.getElementById('ddNotesArea').value;
-        const btn = document.getElementById('ddBtnSaveNotes');
-        const orig = btn.textContent;
-        btn.textContent = '✅ Notes Saved';
-        setTimeout(() => { btn.textContent = orig; }, 2000);
+        const notesValue = document.getElementById('ddNotesArea').value;
+        
+        fetch(`${BASE_URL}/incidents/${activeDeployIncidentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: notesValue })
+        })
+        .then(async res => {
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || "Notes save failed");
+          }
+          return res.json();
+        })
+        .then(data => {
+          const inc = INCIDENTS[activeDeployIncidentId];
+          if (inc) inc.notes = notesValue;
+          
+          const btn = document.getElementById('ddBtnSaveNotes');
+          const orig = btn.textContent;
+          btn.textContent = '✅ Notes Saved';
+          setTimeout(() => { btn.textContent = orig; }, 2000);
+        })
+        .catch(err => {
+          console.error("Notes save error:", err);
+          showToast(`⚠ ${err.message}`, "red");
+        });
+      });
+
+      // Deploy Recommended button
+      document.getElementById('deplBtnConfirm').addEventListener('click', () => {
+        if (!activeDeployIncidentId) return;
+        const inc = INCIDENTS[activeDeployIncidentId];
+        if (!inc) return;
+
+        const payload = {
+          incident_id: inc.id,
+          incident_address: inc.address,
+          allocations: inc.suggested_resources.map(res => ({
+            resource_id: res.resource_id,
+            quantity: res.quantity_suggested
+          })),
+          notes: `FastAPI + Leaflet deployment at ${inc.junction}`
+        };
+
+        fetch(`${BASE_URL}/resources/allocate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+        .then(async res => {
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || "Allocation failed");
+          }
+          return res.json();
+        })
+        .then(data => {
+          showToast("Deployment confirmed successfully", "green-alt");
+          loadIncidents().then(() => {
+            selectDeploymentIncident(activeDeployIncidentId);
+          });
+        })
+        .catch(err => {
+          console.error("Allocation error:", err);
+          showToast(`⚠ ${err.message}`, "red");
+        });
+      });
+
+      // Release Resources button
+      document.getElementById('deplBtnRelease').addEventListener('click', () => {
+        if (!activeDeployIncidentId) return;
+        const inc = INCIDENTS[activeDeployIncidentId];
+        if (!inc) return;
+
+        fetch(`${BASE_URL}/resources/release/${inc.id}`, {
+          method: "POST"
+        })
+        .then(async res => {
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.detail || "Release failed");
+          }
+          return res.json();
+        })
+        .then(data => {
+          showToast("Resources released successfully", "green-alt");
+          loadIncidents().then(() => {
+            selectDeploymentIncident(activeDeployIncidentId);
+          });
+        })
+        .catch(err => {
+          console.error("Release error:", err);
+          showToast(`⚠ ${err.message}`, "red");
+        });
       });
     }
 
@@ -6529,6 +6738,26 @@
             renderSidebar();
             renderResourceStats();
             showLiveAlertBanner(`✅ Resolved: ${id}`, 'green');
+            if (document.getElementById('viewDeployment').classList.contains('active')) {
+              renderDeploymentPlan();
+            }
+          } else if (msg.type === 'INCIDENT_UPDATED') {
+            const inc = normalizeIncident(msg.incident);
+            if (inc.status === 'resolved') {
+              removeIncidentFromMap(inc.id);
+              delete INCIDENTS[inc.id];
+              showLiveAlertBanner(`✅ Resolved: ${inc.id}`, 'green');
+            } else {
+              INCIDENTS[inc.id] = inc;
+              rebuildDeployData();
+              removeIncidentFromMap(inc.id);
+              addIncidentToMap(inc);
+            }
+            renderSidebar();
+            renderResourceStats();
+            if (document.getElementById('viewDeployment').classList.contains('active')) {
+              renderDeploymentPlan();
+            }
           }
         } catch (e) {
           console.warn('[WS] Parse error:', e);
@@ -6545,6 +6774,55 @@
     }
 
     function normalizeIncident(inc) {
+      // Build suggested resources list dynamically if not populated
+      let suggested_resources = inc.suggested_resources || [];
+      if (suggested_resources.length === 0) {
+        const officersNeeded = inc.officers_needed !== undefined ? inc.officers_needed : (inc.predicted_duration_mins ? Math.max(0, Math.min(Math.ceil(inc.predicted_duration_mins * (inc.severity_multiplier || 1) * 0.05 * 3), 20)) : 0);
+        const barricadesNeeded = Math.ceil((inc.barricades_needed !== undefined ? inc.barricades_needed : (inc.barricade_points || 0)) / 10);
+        
+        if (officersNeeded > 0) {
+          suggested_resources.push({
+            resource_name: "Traffic Officer",
+            resource_id: 1,
+            quantity_suggested: officersNeeded,
+            quantity_available: 150,
+            status: "sufficient"
+          });
+        }
+        if (barricadesNeeded > 0) {
+          suggested_resources.push({
+            resource_name: "Barricade Set (10 units)",
+            resource_id: 10,
+            quantity_suggested: barricadesNeeded,
+            quantity_available: 50,
+            status: "sufficient"
+          });
+        }
+        
+        // Map special assets from hazards or special_assets
+        const specialAssets = Array.isArray(inc.special_assets) ? inc.special_assets : (inc.special_assets_needed || []);
+        const specialMapping = {
+          "heavy_crane": { name: "Heavy Crane", id: 8, total: 5 },
+          "fire_engine": { name: "Fire Engine", id: 11, total: 6 },
+          "chainsaw": { name: "Chainsaw", id: 9, total: 12 },
+          "ambulance": { name: "Ambulance", id: 5, total: 10 },
+          "tow_truck": { name: "Tow Truck", id: 6, total: 15 },
+          "water_tanker": { name: "Water Tanker", id: 7, total: 8 }
+        };
+        specialAssets.forEach(asset => {
+          const mapping = specialMapping[asset.toLowerCase()];
+          if (mapping) {
+            suggested_resources.push({
+              resource_name: mapping.name,
+              resource_id: mapping.id,
+              quantity_suggested: 1,
+              quantity_available: mapping.total,
+              status: "sufficient"
+            });
+          }
+        });
+      }
+
       // Backend may return latitude/longitude or lat/lng
       return {
         ...inc,
@@ -6560,7 +6838,7 @@
         llm_analysis: inc.llm_analysis || '',
         timeline: inc.timeline || { start: inc.reported_at ? new Date(inc.reported_at).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',hour12:false}) : '--:--', modified: '--:--', resolved: 'Pending' },
         suggested_diversions: inc.suggested_diversions || [],
-        suggested_resources: inc.suggested_resources || [],
+        suggested_resources: suggested_resources,
         resource_shortage: inc.resource_shortage || false,
         status: inc.status || 'active'
       };
@@ -6587,7 +6865,7 @@
       const jamCircle = L.circle([inc.lat, inc.lng], {
         radius: Math.max(100, inc.jam_length_km * 500),
         color, fillColor: color, fillOpacity: 0.07, weight: 1, opacity: 0.3, dashArray: '5,8'
-      }).addTo(map);
+      });
       jamCirclesMap[inc.id] = jamCircle;
 
 

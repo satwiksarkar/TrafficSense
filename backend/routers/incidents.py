@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from db_models import Incident, Resource, Allocation
 from websocket_manager import manager
-from schemas import IncidentReportRequest, IncidentResponse
+from schemas import IncidentReportRequest, IncidentResponse, UpdateIncidentRequest
 from routers.predict import run_prediction
 
 router = APIRouter()
@@ -50,6 +50,7 @@ def format_incident(inc: Incident) -> dict:
         "special_assets_needed": assets,
         "spatial_resolution_method": inc.spatial_resolution_method,
         "nearest_junction": inc.nearest_junction,
+        "notes": inc.notes or "",
     }
 
 
@@ -191,3 +192,54 @@ def get_incident_history(
         
     incidents = query.order_by(desc(Incident.reported_at)).offset(offset).limit(limit).all()
     return [format_incident(inc) for inc in incidents]
+
+
+# ── PATCH /incidents/{incident_id} ────────────────────────────────────────────
+@router.patch("/{incident_id}", response_model=IncidentResponse, summary="Update incident status and/or notes")
+async def update_incident(incident_id: str, payload: UpdateIncidentRequest, db: Session = Depends(get_db)):
+    inc = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not inc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Incident {incident_id} not found")
+    
+    try:
+        if payload.status is not None:
+            new_status = payload.status.lower()
+            if new_status == "resolved" and inc.status != "resolved":
+                inc.status = "resolved"
+                inc.resolved_at = datetime.utcnow()
+                # Release allocated resources
+                active_allocations = db.query(Allocation).filter(
+                    Allocation.incident_id == incident_id,
+                    Allocation.status == "active"
+                ).all()
+                now = datetime.utcnow()
+                for alloc in active_allocations:
+                    resource = db.query(Resource).filter(Resource.id == alloc.resource_id).first()
+                    if resource:
+                        resource.available_count += alloc.quantity_allocated
+                    alloc.status = "released"
+                    alloc.released_at = now
+            elif new_status != "resolved" and inc.status == "resolved":
+                inc.status = payload.status
+                inc.resolved_at = None
+            else:
+                inc.status = payload.status
+        
+        if payload.notes is not None:
+            inc.notes = payload.notes
+            
+        db.commit()
+        db.refresh(inc)
+        
+        formatted = format_incident(inc)
+        
+        # Broadcast the update to all clients
+        await manager.broadcast({
+            "type": "INCIDENT_UPDATED",
+            "incident": formatted
+        })
+        
+        return formatted
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
