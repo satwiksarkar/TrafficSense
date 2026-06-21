@@ -76,3 +76,47 @@ def compute_spatial_clusters(reports_list, radius_km=0.5):
             processed_raw_ids.extend([r['id'] for r in matched_reports])
 
     return consolidated_clusters, processed_raw_ids
+
+import os
+import json
+
+def load_city_traffic_stations(DATA_BASE_DIR, city="Bangalore"):
+    """
+    Loads traffic police station data (including coordinates and inventory metrics)
+    for a specific city from the JSON database configuration.
+    
+    Args:
+        DATA_BASE_DIR (str): Base folder path where traffic_police_station.json is located.
+        city (str): Key matching your target region in the JSON file. Defaults to 'Bangalore'.
+        
+    Returns:
+        list: A list of dictionaries containing station details and asset inventories.
+    """
+    json_file_path = os.path.join(DATA_BASE_DIR, "traffic_police_station.json")
+    
+    if not os.path.exists(json_file_path):
+        print(f"❌ [Database Error]: File not found at target directory: {json_file_path}")
+        return []
+        
+    try:
+        with open(json_file_path, "r", encoding="utf-8") as file:
+            data = json.load(file)
+            
+            # Clean up input string casing mismatch issues ("bangalore" -> "Bangalore")
+            formatted_city = str(city).strip().lower().capitalize()
+            
+            # Explicit match check to match your exact JSON root keys
+            if formatted_city == "Bangalore":
+                formatted_city = "Bangalore"
+                
+            stations = data.get(formatted_city, [])
+            print(f"📁 [Database]: Successfully loaded {len(stations)} stations with assets for {formatted_city}.")
+            return stations
+            
+    except json.JSONDecodeError:
+        print(f"❌ [Database Parse Error]: 'traffic_police_station.json' contains invalid JSON layout syntax.")
+        return []
+    except Exception as e:
+        print(f"❌ [Database Read Exception]: Unexpected runtime error: {e}")
+        return []
+

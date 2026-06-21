@@ -9,6 +9,9 @@ class TrafficReportManager:
         self.threshold = consolidation_threshold
         self._init_db()
 
+    def get_db_dir(self):
+        return os.path.dirname(self.report_db_path)
+        
     def _init_db(self):
         """Creates the local database schemas if they don't already exist."""
         try:
@@ -245,6 +248,8 @@ class TrafficReportManager:
 
 
 from datetime import datetime, timezone
+import os
+import sqlite3
 from service.news_handler.collect_news import process_news  # Assuming process_news is the entry point
 
 class NewsReportManager:
@@ -285,7 +290,6 @@ class NewsReportManager:
                     )
                 ''')
                 
-                # Perform safe ALTER commands to support existing database migrations
                 try:
                     cursor.execute("ALTER TABLE traffic_reports ADD COLUMN priority TEXT DEFAULT 'MEDIUM'")
                 except sqlite3.OperationalError:
@@ -301,16 +305,32 @@ class NewsReportManager:
         except sqlite3.Error as e:
             print(f"[Offline DB Init Error]: {e}")
 
+    def purge_old_news(self):
+        """Deletes any records from traffic_reports that are older than 24 hours."""
+        try:
+            with sqlite3.connect(self.report_db_path) as conn:
+                cursor = conn.cursor()
+                # Targets rows older than 24 hours relative to modern UTC standards
+                cursor.execute('''
+                    DELETE FROM traffic_reports 
+                    WHERE datetime(timestamp) < datetime('now', '-1 day')
+                ''')
+                deleted_rows = cursor.rowcount
+                if deleted_rows > 0:
+                    print(f"[Garbage Collector]: Purged {deleted_rows} expired news reports older than 24 hours.")
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"[Garbage Collector Error]: Failed to clean old news data: {e}")
+
     def _geocode_location(self, location_name):
-        """
-        Placeholder method to convert a location name string into coordinates.
-        Replace this with an actual geocoding service (like geopy or an internal lookup dictionary).
-        """
-        # Return mock coordinates for India center region as a fallback
+        """Placeholder method to convert a location name string into coordinates."""
         return 20.5937, 78.9629
 
     def insert_news(self):
-        """Fetches the latest news using the news handler and saves relevant records to the DB."""
+        """Purges old records, then fetches and logs the latest news stories."""
+        # Clean out yesterdays stories first
+        self.purge_old_news()
+
         print("[News Handler]: Fetching fresh traffic stories...")
         fetched_events = process_news()
         
@@ -324,7 +344,6 @@ class NewsReportManager:
                 cursor = conn.cursor()
                 
                 for event in fetched_events:
-                    # Resolve a location name if found, otherwise use a generic fallback
                     loc_name = event["locations"][0] if event["locations"] else "India (General)"
                     lat, lng = self._geocode_location(loc_name)
                     
@@ -352,7 +371,7 @@ class NewsReportManager:
         """Retrieves collected traffic reports from the database sorted by newest first."""
         try:
             with sqlite3.connect(self.report_db_path) as conn:
-                conn.row_factory = sqlite3.Row  # Returns results as dictionary-accessible items
+                conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
                 cursor.execute('''
                     SELECT id, issue_type, lat, lng, location_name, description, priority, timestamp 
@@ -366,19 +385,3 @@ class NewsReportManager:
         except sqlite3.Error as e:
             print(f"[News Handler DB Fetch Error]: {e}")
             return []
-
-# ==========================================================
-# EXECUTION EXAMPLE
-# ==========================================================
-if __name__ == "__main__":
-    # Setup manager instance pointing to a local directory
-    manager = NewsReportManager(DATA_BASE_DIR="./data")
-    
-    # 1. Fetch live RSS items and record them into your local sqlite file
-    manager.insert_news()
-    
-    # 2. Extract and inspect whatever was saved inside the db file
-    saved_reports = manager.get_news(limit=5)
-    print("\n--- RECENT STORED ENTRIES ---")
-    for report in saved_reports:
-        print(f"[{report['priority']}] {report['issue_type']} at {report['location_name']}: {report['description']}")

@@ -3,152 +3,632 @@
     {
       "station_name": "Traffic Management Center",
       "lat": 12.9825,
-      "lon": 77.5946
+      "lon": 77.5946,
+      "inventory": {
+        "Traffic Officer": 150,
+        "Traffic Inspector": 20,
+        "Home Guard": 80,
+        "ROBOCOP": 3,
+        "BATMAN": 1,
+        "Patrol Car": 30,
+        "Ambulance": 10,
+        "Tow Truck": 15,
+        "Water Tanker": 8,
+        "Heavy Crane": 7,
+        "Chainsaw": 12,
+        "Barricade Set (10 units)": 50,
+        "Fire Engine": 6,
+        "Traffic Cone Set": 100
+      }
     },
     {
       "station_name": "Silk Board Junction",
       "lat": 12.9177,
-      "lon": 77.6229
+      "lon": 77.6229,
+      "inventory": {
+        "Traffic Officer": 45,
+        "Traffic Inspector": 4,
+        "Home Guard": 25,
+        "ROBOCOP": 1,
+        "BATMAN": 0,
+        "Patrol Car": 8,
+        "Ambulance": 2,
+        "Tow Truck": 4,
+        "Water Tanker": 2,
+        "Heavy Crane": 2,
+        "Chainsaw": 3,
+        "Barricade Set (10 units)": 15,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 30
+      }
     },
     {
       "station_name": "Hebbal Flyover Junction",
       "lat": 13.0355,
-      "lon": 77.5970
+      "lon": 77.5970,
+      "inventory": {
+        "Traffic Officer": 40,
+        "Traffic Inspector": 3,
+        "Home Guard": 20,
+        "ROBOCOP": 1,
+        "BATMAN": 0,
+        "Patrol Car": 6,
+        "Ambulance": 2,
+        "Tow Truck": 3,
+        "Water Tanker": 1,
+        "Heavy Crane": 2,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "KR Puram Junction",
       "lat": 13.0087,
-      "lon": 77.6959
+      "lon": 77.6959,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 1,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 3,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Tin Factory Junction",
       "lat": 12.9960,
-      "lon": 77.6608
+      "lon": 77.6608,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Marathahalli Junction",
       "lat": 12.9591,
-      "lon": 77.6974
+      "lon": 77.6974,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 2,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Sony World Junction",
       "lat": 12.9352,
-      "lon": 77.6245
+      "lon": 77.6245,
+      "inventory": {
+        "Traffic Officer": 25,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 8,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 15
+      }
     },
     {
       "station_name": "Adugodi Junction",
       "lat": 12.9422,
-      "lon": 77.6098
+      "lon": 77.6098,
+      "inventory": {
+        "Traffic Officer": 20,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 3,
+        "Ambulance": 1,
+        "Tow Truck": 1,
+        "Water Tanker": 0,
+        "Heavy Crane": 0,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 6,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 15
+      }
     },
     {
       "station_name": "Devarabeesanahalli Junction",
       "lat": 12.9497,
-      "lon": 77.6960
+      "lon": 77.6960,
+      "inventory": {
+        "Traffic Officer": 25,
+        "Traffic Inspector": 2,
+        "Home Guard": 12,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 8,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Manipal Hospital Junction",
       "lat": 12.9580,
-      "lon": 77.6486
+      "lon": 77.6486,
+      "inventory": {
+        "Traffic Officer": 20,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 3,
+        "Ambulance": 2,
+        "Tow Truck": 1,
+        "Water Tanker": 0,
+        "Heavy Crane": 0,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 6,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 15
+      }
     },
     {
       "station_name": "HAL Main Gate",
       "lat": 12.9589,
-      "lon": 77.6685
+      "lon": 77.6685,
+      "inventory": {
+        "Traffic Officer": 25,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 8,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Mekhri Circle",
       "lat": 13.0136,
-      "lon": 77.5852
+      "lon": 77.5852,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Yeshwanthpur Circle",
       "lat": 13.0285,
-      "lon": 77.5547
+      "lon": 77.5547,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Goraguntepalya Junction",
       "lat": 13.0288,
-      "lon": 77.5416
+      "lon": 77.5416,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Nayandahalli Junction",
       "lat": 12.9466,
-      "lon": 77.5256
+      "lon": 77.5256,
+      "inventory": {
+        "Traffic Officer": 25,
+        "Traffic Inspector": 2,
+        "Home Guard": 12,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 8,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Mysore Road Satellite Bus Stand",
       "lat": 12.9513,
-      "lon": 77.5332
+      "lon": 77.5332,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 2,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Banashankari Junction",
       "lat": 12.9255,
-      "lon": 77.5468
+      "lon": 77.5468,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Jayanagar 4th Block",
       "lat": 12.9250,
-      "lon": 77.5938
+      "lon": 77.5938,
+      "inventory": {
+        "Traffic Officer": 25,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 1,
+        "Water Tanker": 0,
+        "Heavy Crane": 0,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 8,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Lalbagh West Gate",
       "lat": 12.9506,
-      "lon": 77.5848
+      "lon": 77.5848,
+      "inventory": {
+        "Traffic Officer": 20,
+        "Traffic Inspector": 2,
+        "Home Guard": 10,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 3,
+        "Ambulance": 1,
+        "Tow Truck": 1,
+        "Water Tanker": 0,
+        "Heavy Crane": 0,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 6,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 15
+      }
     },
     {
       "station_name": "Richmond Circle",
       "lat": 12.9660,
-      "lon": 77.5993
+      "lon": 77.5993,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 20,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 6,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Shivajinagar Bus Stand",
       "lat": 12.9834,
-      "lon": 77.6033
+      "lon": 77.6033,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 2,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "MG Road Junction",
       "lat": 12.9758,
-      "lon": 77.6056
+      "lon": 77.6056,
+      "inventory": {
+        "Traffic Officer": 40,
+        "Traffic Inspector": 4,
+        "Home Guard": 20,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 6,
+        "Ambulance": 1,
+        "Tow Truck": 3,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 15,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 30
+      }
     },
     {
       "station_name": "Trinity Circle",
       "lat": 12.9737,
-      "lon": 77.6207
+      "lon": 77.6207,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Domlur Flyover",
       "lat": 12.9612,
-      "lon": 77.6387
+      "lon": 77.6387,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Bellandur Junction",
       "lat": 12.9257,
-      "lon": 77.6762
+      "lon": 77.6762,
+      "inventory": {
+        "Traffic Officer": 40,
+        "Traffic Inspector": 3,
+        "Home Guard": 20,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 6,
+        "Ambulance": 2,
+        "Tow Truck": 3,
+        "Water Tanker": 1,
+        "Heavy Crane": 2,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 15,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 30
+      }
     },
     {
       "station_name": "Electronic City Toll",
       "lat": 12.8399,
-      "lon": 77.6770
+      "lon": 77.6770,
+      "inventory": {
+        "Traffic Officer": 45,
+        "Traffic Inspector": 4,
+        "Home Guard": 25,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 8,
+        "Ambulance": 2,
+        "Tow Truck": 4,
+        "Water Tanker": 2,
+        "Heavy Crane": 2,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 20,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 40
+      }
     },
     {
       "station_name": "Attibele Check Post",
       "lat": 12.7830,
-      "lon": 77.7700
+      "lon": 77.7700,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 15,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "Whitefield Hope Farm",
       "lat": 12.9863,
-      "lon": 77.7539
+      "lon": 77.7539,
+      "inventory": {
+        "Traffic Officer": 35,
+        "Traffic Inspector": 3,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 5,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 2,
+        "Barricade Set (10 units)": 12,
+        "Fire Engine": 1,
+        "Traffic Cone Set": 25
+      }
     },
     {
       "station_name": "ITPL Main Gate",
       "lat": 12.9858,
-      "lon": 77.7370
+      "lon": 77.7370,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 12,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 0,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     },
     {
       "station_name": "Kundalahalli Gate",
       "lat": 12.9646,
-      "lon": 77.7111
+      "lon": 77.7111,
+      "inventory": {
+        "Traffic Officer": 30,
+        "Traffic Inspector": 2,
+        "Home Guard": 15,
+        "ROBOCOP": 0,
+        "BATMAN": 0,
+        "Patrol Car": 4,
+        "Ambulance": 1,
+        "Tow Truck": 2,
+        "Water Tanker": 1,
+        "Heavy Crane": 1,
+        "Chainsaw": 1,
+        "Barricade Set (10 units)": 10,
+        "Fire Engine": 0,
+        "Traffic Cone Set": 20
+      }
     }
   ]
 }

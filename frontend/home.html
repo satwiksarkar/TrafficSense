@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrafficSense — Bengaluru Civic Intelligence</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --sky-1: #060A14;
+      --sky-2: #0C1730;
+      --sky-3: #16234A;
+      --ink: #0B1220;
+      --fog: #CBD4E3;
+      --fog-dim: #8C97AC;
+      --amber: #F2A93E;
+      --amber-deep: #C9810F;
+      --blue: #3E7BFA;
+      --blue-soft: #7FA6FF;
+      --line: rgba(255, 255, 255, .1);
+      --glass: rgba(10, 16, 28, .40);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--ink);
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ============ SCENE ============ */
+    .scene {
+      position: relative;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-image:
+        linear-gradient(95deg, rgba(6, 10, 20, 0.96) 0%, rgba(6, 10, 20, 0.85) 30%, rgba(6, 10, 20, 0.4) 60%, rgba(6, 10, 20, 0.15) 80%, rgba(6, 10, 20, 0.4) 100%),
+        linear-gradient(0deg, rgba(6, 10, 20, 0.7) 0%, transparent 40%, transparent 70%, rgba(6, 10, 20, 0.5) 100%),
+        url('assert/image.png');
+      background-size: cover, cover, cover;
+      background-position: center, center, center 38%;
+      background-repeat: no-repeat;
+    }
+
+    /* Decorative Ambient Glow */
+    .scene::before {
+      content: '';
+      position: absolute;
+      top: 25%;
+      left: 10%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(62, 123, 250, 0.12) 0%, rgba(242, 169, 62, 0.04) 50%, transparent 100%);
+      filter: blur(80px);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* ============ HUD PERIMETER LIGHT ============ */
+    @property --angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    .hud-frame {
+      position: fixed;
+      inset: 10px;
+      z-index: 90;
+      pointer-events: none;
+      border-radius: 18px;
+    }
+
+    .hud-frame::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      padding: 1.5px;
+      background: conic-gradient(from var(--angle), transparent 0deg, transparent 250deg,
+          rgba(242, 169, 62, 0) 270deg, var(--amber) 300deg, var(--blue-soft) 326deg, rgba(127, 166, 255, 0) 345deg, transparent 360deg);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: spin-angle 6s linear infinite;
+      filter: drop-shadow(0 0 6px rgba(242, 169, 62, .55));
+    }
+
+    @keyframes spin-angle {
+      to {
+        --angle: 360deg;
+      }
+    }
+
+    .hud-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      padding: 1px;
+      background: conic-gradient(from calc(var(--angle) * -1 + 180deg), transparent 0deg, transparent 270deg,
+          rgba(127, 166, 255, .55) 300deg, transparent 330deg);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: .7;
+    }
+
+    /* stars */
+    .stars {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      opacity: .5;
+      animation: twinkle 3.5s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+
+      0%,
+      100% {
+        opacity: .1;
+      }
+
+      50% {
+        opacity: .7;
+      }
+    }
+
+    /* ============ NAV ============ */
+    .nav {
+      position: relative;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(6, 10, 20, 0.35);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .nav-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, var(--blue), #1E3FAE);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 8px 20px rgba(62, 123, 250, .35);
+    }
+
+    .nav-mark svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .nav-brand h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.2px;
+    }
+
+    .nav-brand span {
+      display: block;
+      font-size: 9.5px;
+      letter-spacing: 2px;
+      color: var(--fog-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fog);
+      transition: color .15s;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+    }
+
+    .nav-login {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--glass);
+      transition: background .15s, border-color .15s;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .nav-login:hover {
+      background: rgba(255, 255, 255, .09);
+      border-color: rgba(255, 255, 255, .2);
+    }
+
+    .nav-login svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .nav-links {
+        display: none;
+      }
+    }
+
+    /* fine grain vignette to deepen the photo's edges */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      background: radial-gradient(ellipse 120% 90% at 18% 50%, transparent 40%, rgba(0, 0, 0, .45) 100%);
+    }
+
+    /* ============ LEFT HERO LAYOUT ============ */
+    .hero {
+      position: relative;
+      z-index: 20;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+      padding: 40px 6vw 60px;
+      max-width: 680px;
+      perspective: 1000px;
+    }
+
+    .layer {
+      will-change: transform;
+      transition: transform .25s ease-out;
+    }
+
+    /* Live Badge styling */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(62, 123, 250, 0.08);
+      border: 1px solid rgba(62, 123, 250, 0.2);
+      color: var(--blue-soft);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      align-self: flex-start;
+      box-shadow: 0 4px 12px rgba(62, 123, 250, 0.05);
+      animation: fadeUp .8s .04s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    .dot-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 8px;
+      height: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #3fb950;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #3fb950;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.85;
+        box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.6);
+      }
+
+      70% {
+        transform: scale(1.1);
+        opacity: 1;
+        box-shadow: 0 0 0 6px rgba(63, 185, 80, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 0.85;
+        box-shadow: 0 0 0 0 rgba(63, 185, 80, 0);
+      }
+    }
+
+    h2.headline {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: clamp(36px, 5.2vw, 66px);
+      line-height: 1.06;
+      letter-spacing: -1.6px;
+      text-shadow: 0 6px 30px rgba(0, 0, 0, .45);
+      animation: fadeUp .8s .08s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    h2.headline span.line {
+      display: block;
+    }
+
+    h2.headline .grad {
+      background: linear-gradient(95deg, var(--amber), var(--blue-soft) 85%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub {
+      margin-top: 22px;
+      max-width: 480px;
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--fog);
+      font-weight: 400;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, .5);
+      animation: fadeUp .8s .16s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    /* ---- CTA glass layer ---- */
+    .cta-layer {
+      margin-top: 36px;
+      display: inline-flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 22px;
+      border-radius: 18px;
+      background: linear-gradient(165deg, rgba(12, 23, 48, 0.45), rgba(6, 10, 20, 0.45));
+      border: 1px solid rgba(255, 255, 255, .08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .05);
+      animation: fadeUp .8s .24s cubic-bezier(.2, .8, .2, 1) both;
+      align-self: flex-start;
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* Pinned/Floating Get Started Button style (repositioned to bottom right corner) */
+    #getStartedBtn {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      z-index: 100;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 99px;
+      background: linear-gradient(135deg, var(--amber), var(--amber-deep));
+      color: #291900;
+      font-weight: 700;
+      font-size: 13.5px;
+      box-shadow: 0 8px 24px rgba(242, 169, 62, .3), 0 0 0 1px rgba(255, 255, 255, .1);
+      transition: transform .2s cubic-bezier(.4, 0, .2, 1), box-shadow .2s, background .2s;
+      overflow: hidden;
+      border: none;
+      cursor: pointer;
+    }
+
+    #getStartedBtn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 12px 30px rgba(242, 169, 62, .45), 0 0 0 2px rgba(255, 255, 255, .25);
+    }
+
+    #getStartedBtn:active {
+      transform: translateY(-1px) scale(.98);
+    }
+
+    #getStartedBtn svg {
+      width: 14px;
+      height: 14px;
+      transition: transform .2s;
+    }
+
+    #getStartedBtn:hover svg {
+      transform: translateX(3px);
+    }
+
+    #getStartedBtn .shine {
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(255, 255, 255, .4), transparent);
+      transform: skewX(-20deg);
+      animation: shine 3.5s ease-in-out infinite;
+    }
+
+    @keyframes shine {
+      0% {
+        left: -60%;
+      }
+
+      35% {
+        left: 130%;
+      }
+
+      100% {
+        left: 130%;
+      }
+    }
+
+    .cta-secondary {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, .04);
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      transition: all .18s ease;
+    }
+
+    .cta-secondary:hover {
+      background: rgba(255, 255, 255, .09);
+      border-color: rgba(255, 255, 255, .25);
+      transform: translateY(-1.5px);
+    }
+
+    .cta-secondary svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .cta-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--fog-dim);
+      font-weight: 500;
+    }
+
+    .cta-foot svg {
+      width: 13px;
+      height: 13px;
+      color: var(--blue-soft);
+      flex-shrink: 0;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ============ STATS STRIP ============ */
+    .stats {
+      position: relative;
+      z-index: 20;
+      display: flex;
+      gap: 0;
+      margin-top: 46px;
+      animation: fadeUp .8s .32s cubic-bezier(.2, .8, .2, 1) both;
+      flex-wrap: wrap;
+      align-self: flex-start;
+    }
+
+    .stat {
+      padding: 0 26px 0 0;
+      margin-right: 26px;
+      text-align: left;
+      border-right: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .stat:last-child {
+      border-right: none;
+      margin-right: 0;
+      padding-right: 0;
+    }
+
+    .stat .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 23px;
+      font-weight: 700;
+      background: linear-gradient(95deg, #fff, var(--blue-soft));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .stat .lbl {
+      margin-top: 5px;
+      font-size: 9.5px;
+      letter-spacing: 1.2px;
+      color: var(--fog-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    @media (max-width:760px) {
+      .nav {
+        padding: 18px 20px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding: 28px 22px 50px;
+        max-width: none;
+      }
+
+      .cta-layer {
+        width: 100%;
+      }
+
+      .stats {
+        width: 100%;
+      }
+
+      #getStartedBtn {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        transform: none;
+        padding: 9px 16px;
+        font-size: 12.5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="scene" id="scene">
+    <div class="hud-frame"></div>
+    <div class="stars" id="stars"></div>
+    <div class="vignette"></div>
+
+    <!-- NAV -->
+    <nav class="nav">
+      <div class="nav-brand">
+        <div class="nav-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M3 12h4l2-7 4 14 2-7h6" />
+          </svg>
+        </div>
+        <div>
+          <h1>TrafficSense</h1>
+          <span>Bengaluru Civic Grid</span>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Platform</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#stats">Impact</a>
+      </div>
+      <a class="nav-login" href="/officer-dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M20 21a8 8 0 0 0-16 0" />
+        </svg>
+        Officer Login
+      </a>
+    </nav>
+
+    <!-- HERO : layered left-side content -->
+    <div class="hero">
+      <div class="badge layer" data-depth="2">
+        <span class="dot-wrap"><span class="dot"></span></span>
+        LIVE CIVIC TRAFFIC INTELLIGENCE
+      </div>
+
+      <h2 class="headline layer" data-depth="4">
+        <span class="line">See the city move.</span>
+        <span class="line">Respond <span class="grad">before</span> it stops.</span>
+      </h2>
+
+      <p class="sub layer" data-depth="3">
+        Real-time incident mapping, deployment planning and forecasting for Bengaluru's traffic
+        operations — built for the officers keeping the city moving.
+      </p>
+
+      <!-- buttons as their own elevated glass layer -->
+      <div class="cta-layer layer" data-depth="7">
+        <div class="cta-row">
+          <a class="cta-secondary" href="#stats">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="10 8 16 12 10 16 10 8" />
+            </svg>
+            See it in action
+          </a>
+        </div>
+        <div class="cta-foot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+          No setup needed — officers are routed straight to live ops
+        </div>
+      </div>
+
+      <div class="stats layer" data-depth="1.5" id="stats">
+        <div class="stat">
+          <div class="num">214</div>
+          <div class="lbl">Officers deployed</div>
+        </div>
+        <div class="stat">
+          <div class="num">4.2m</div>
+          <div class="lbl">Avg. response time</div>
+        </div>
+        <div class="stat">
+          <div class="num">1,930</div>
+          <div class="lbl">Incidents resolved</div>
+        </div>
+        <div class="stat">
+          <div class="num">98.6%</div>
+          <div class="lbl">Live coverage</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pinned/Floating Get Started Button (outside transform containers) -->
+    <button id="getStartedBtn">
+      <span class="shine"></span>
+      Get Started
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+        stroke-linejoin="round">
+        <line x1="5" y1="12" x2="19" y2="12" />
+        <polyline points="12 5 19 12 12 19" />
+      </svg>
+    </button>
+  </div>
+
+  <script>
+    /* random stars (only in the upper third, behind the gradient) */
+    const starsBox = document.getElementById('stars');
+    for (let i = 0; i < 60; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 40 + '%';
+      s.style.animationDelay = (Math.random() * 3.5) + 's';
+      s.style.width = s.style.height = (Math.random() < .15 ? '3px' : '1.5px');
+      starsBox.appendChild(s);
+    }
+
+    /* subtle layered parallax — each .layer drifts at its own depth on mouse move */
+    const scene = document.getElementById('scene');
+    const layers = document.querySelectorAll('.layer');
+    scene.addEventListener('mousemove', (e) => {
+      const mx = (e.clientX / window.innerWidth) - 0.5;
+      const my = (e.clientY / window.innerHeight) - 0.5;
+      layers.forEach(layer => {
+        const depth = parseFloat(layer.getAttribute('data-depth')) || 1;
+        layer.style.transform = `translate(${mx * depth * 6}px, ${my * depth * 6}px)`;
+      });
+    });
+    scene.addEventListener('mouseleave', () => {
+      layers.forEach(layer => layer.style.transform = 'translate(0,0)');
+    });
+
+    /* CTA -> officer dashboard */
+    document.getElementById('getStartedBtn').addEventListener('click', () => {
+      window.location.href = '/officer-dashboard';
+    });
+  </script>
+
+</body>
+
+</html>
